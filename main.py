@@ -14,26 +14,8 @@ from dotenv import load_dotenv
 
 
 def get_random_troll_word():
-    words_list = [
-        "shenanigan",
-        "tomfoolery",
-        "monkey business",
-        "mischief",
-        "chicanery",
-        "diabolism",
-        "devilry",
-        "mischievousness",
-        "buffoonery",
-        "hijink",
-        "horseplay",
-        "whimsy",
-        "gambit",
-        "hoodwink",
-        "silliness",
-        "antic",
-        "rascality",
-        "hooliganism"
-    ]
+    with open('database/troll_words.txt', 'r', encoding="utf-8") as file:
+        words_list = file.read().split('\n')
 
     return random.choice(words_list)
 
