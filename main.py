@@ -1,4 +1,4 @@
-from get_posts import get_top_post
+from utils import get_top_post, add_post_to_blacklist
 from pprint import pprint
 from urllib.request import urlretrieve
 import sqlite3
@@ -20,8 +20,10 @@ def get_random_troll_word():
     return random.choice(words_list)
 
 
-def after_day():
+def cleanup():
+    print("Resetting media folder")
     shutil.rmtree('media')
+    os.mkdir('media')
 
 
 def get_message(post_id):
@@ -75,7 +77,7 @@ def post_on_twitter(post):
         media_category = "tweet_image"
 
     media = api.media_upload(
-        post["location"], media_category=media_category, chunked=True)
+        post["location"], media_category=media_category, chunked=True, wait_for_async_finalize=True)
 
     status = client.create_tweet(text=get_message(
         post["id"]), media_ids=[media.media_id_string]).data
@@ -97,6 +99,12 @@ def check_if_post_exists(post_id):
     return cursor.fetchone() is not None
 
 
+def sanitize_extension(filename):
+    extension = filename.split('.')[-1].split('?')[0]
+    print(f"File Extension: {extension}")
+    return extension
+
+
 def process_post(post):
     dash = "-"*(len(post['title'])+7)
     print(f"Posting content from https://reddit.com{post['permalink']}")
@@ -114,7 +122,7 @@ def process_post(post):
         media = post["media"]
         post["type"] = "video"
     else:
-        filename = f"media/{post['id']}.{post['url'].split('.')[-1]}"
+        filename = f"media/{post['id']}.{sanitize_extension(post['url'])}"
         media = post["url"]
         post["type"] = "image"
     urlretrieve(media, filename)
@@ -123,19 +131,30 @@ def process_post(post):
 
 
 def main():
-    posts = get_top_post(get_subreddit_names())
-    while True:
-        current_post = posts.pop(0)
-        if check_if_post_exists(current_post["id"]) == False:
-            break
+    current_post = {"id": -1}
+    try:
+        posts = get_top_post(get_subreddit_names())
+        while True:
+            current_post = posts.pop(0)
+            if check_if_post_exists(current_post["id"]) == False:
+                break
+            else:
+                print(
+                    f"Post with id [{current_post['id']}] already exists, choosing another one")
+        process_post(current_post)
+    except Exception as error:
+        print("An error occured:")
+        print(error)
+        print("Adding to blacklist and trying again in 30 minutes")
+        if current_post["id"] != -1:
+            add_post_to_blacklist(current_post["id"])
         else:
-            print(
-                f"Post with id [{current_post['id']}] already exists, choosing another one")
-    process_post(current_post)
+            print("[CRITICAL ERROR] No post was processed, skipping blacklist")
 
 
 if __name__ == '__main__':
     schedule.every(30).minutes.do(main).run()
+    schedule.every().day.at("00:00").do(cleanup)
 
     while True:
         schedule.run_pending()

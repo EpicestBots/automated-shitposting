@@ -160,5 +160,6 @@ cython_debug/
 #.idea/
 
 database/posts.db
+database/blacklist.db
 database/subreddits.txt
 media/
