@@ -92,8 +92,8 @@ def post_on_twitter(post):
     else:
         media_category = "tweet_image"
 
-    media = api.simple_upload(
-        post["location"], media_category=media_category)
+    media = api.media_upload(
+        post["location"], media_category=media_category, chunked=True)
 
     status = client.create_tweet(text=get_message(
         post["id"]), media_ids=[media.media_id_string]).data
