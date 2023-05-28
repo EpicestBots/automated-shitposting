@@ -80,7 +80,6 @@ def post_on_twitter(post):
     status = client.create_tweet(text=get_message(
         post["id"]), media_ids=[media.media_id_string]).data
     status = DefaultMunch.fromDict(status)
-    client.like(status.id)
     print(
         f"Posted on twitter at: https://twitter.com/shitposting_bot/status/{status.id}")
     add_post_to_database(status, post)
