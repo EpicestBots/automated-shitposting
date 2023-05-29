@@ -67,7 +67,7 @@ def get_top_post(subreddit) -> dict:
         username=os.getenv("USERNAME"),
     )
     posts = []
-    for submission in reddit.subreddit(subreddit).top(time_filter="day", limit=30):
+    for submission in reddit.subreddit(subreddit).top(time_filter="day", limit=42):
         opts = {}
         if (not submission.over_18 and not submission.pinned and not submission.is_video and post_type(submission) in ["image", "video"] and not check_if_blacklisted(submission.id)):
             file_size = get_file_size(submission.url)
